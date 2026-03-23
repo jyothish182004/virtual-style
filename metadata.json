@@ -1,0 +1,7 @@
+{
+  "name": "Virtual Style Try-On",
+  "description": "A virtual try-on system that allows users to see how clothes from popular platforms look on them using AI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

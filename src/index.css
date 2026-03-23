@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-black: #0A0A0A;
+  --color-brand-gold: #D4AF37;
+  --color-brand-paper: #FDFDFB;
+  --color-brand-accent: #C5A059;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-paper text-brand-black antialiased selection:bg-brand-black selection:text-white;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-2xl border-b border-black/5;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .bento-card {
+    @apply bg-white border border-black/[0.03] rounded-[2.5rem] p-8 transition-all duration-700 hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] hover:-translate-y-2;
+  }
+
+  .btn-primary {
+    @apply bg-brand-black text-white px-8 py-4 rounded-full text-xs font-bold uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all duration-300 shadow-xl shadow-black/10 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-brand-black border border-black/5 px-8 py-4 rounded-full text-xs font-bold uppercase tracking-[0.2em] hover:border-black transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .input-luxury {
+    @apply w-full h-16 px-8 bg-white border border-black/[0.03] rounded-2xl focus:outline-none focus:ring-4 focus:ring-black/[0.02] focus:border-black/10 transition-all duration-300 font-medium text-lg placeholder:text-neutral-300;
+  }
+
+  .label-luxury {
+    @apply text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-3 block;
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.text-gradient-gold {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-gold via-brand-accent to-brand-gold;
+}

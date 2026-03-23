@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user preferences and profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "displayName": { "type": "string", "description": "The display name of the user." },
+        "email": { "type": "string", "description": "The email address of the user.", "format": "email" },
+        "stylePreference": { "type": "string", "description": "The user's preferred fashion style." },
+        "bodyType": { "type": "string", "description": "The user's body type for better recommendations." },
+        "height": { "type": "string", "description": "The user's height in cm." },
+        "weight": { "type": "string", "description": "The user's weight in kg." },
+        "skinTone": { "type": "string", "description": "The user's skin tone hex code." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created." }
+      },
+      "required": ["uid", "displayName", "email"]
+    },
+    "WardrobeItem": {
+      "title": "Wardrobe Item",
+      "description": "An item in the user's virtual wardrobe.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The ID of the user who owns this item." },
+        "productId": { "type": "string", "description": "The ID of the product." },
+        "name": { "type": "string", "description": "The name of the product." },
+        "price": { "type": "string", "description": "The price of the product." },
+        "platform": { "type": "string", "description": "The platform where the product is available." },
+        "imageUrl": { "type": "string", "description": "The URL of the product image." },
+        "tryOnResult": { "type": "string", "description": "The base64 result of a virtual try-on." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the item was added." }
+      },
+      "required": ["uid", "productId", "name", "imageUrl"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A message in the stylist chat.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The ID of the user." },
+        "role": { "type": "string", "enum": ["user", "model"], "description": "The role of the sender." },
+        "text": { "type": "string", "description": "The text of the message." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the message was sent." }
+      },
+      "required": ["uid", "role", "text", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents."
+    },
+    "/wardrobe/{itemId}": {
+      "schema": "WardrobeItem",
+      "description": "User wardrobe items."
+    },
+    "/chats/{chatId}": {
+      "schema": "ChatMessage",
+      "description": "Stylist chat messages."
+    }
+  }
+}

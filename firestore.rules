@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (matches auth.uid)
+    // Fields:
+    //   - uid: string (required, immutable) - The unique ID of the user.
+    //   - displayName: string (required) - The display name of the user.
+    //   - email: string (required, format: email) - The email address of the user.
+    //   - stylePreference: string (optional) - The user's preferred fashion style.
+    //   - bodyType: string (optional) - The user's body type for better recommendations.
+    //   - height: string (optional) - The user's height in cm.
+    //   - weight: string (optional) - The user's weight in kg.
+    //   - skinTone: string (optional) - The user's skin tone hex code.
+    //   - createdAt: timestamp (required, immutable) - When the profile was created.
+    //
+    // Collection: wardrobe
+    // Document ID: itemId (random)
+    // Fields:
+    //   - uid: string (required, immutable) - The ID of the user who owns this item.
+    //   - productId: string (required) - The ID of the product.
+    //   - name: string (required) - The name of the product.
+    //   - price: string (optional) - The price of the product.
+    //   - platform: string (optional) - The platform where the product is available.
+    //   - imageUrl: string (required) - The URL of the product image.
+    //   - tryOnResult: string (optional) - The base64 result of a virtual try-on.
+    //   - createdAt: timestamp (required, immutable) - When the item was added.
+    //
+    // Collection: chats
+    // Document ID: chatId (random)
+    // Fields:
+    //   - uid: string (required, immutable) - The ID of the user.
+    //   - role: string (required, enum: ["user", "model"]) - The role of the sender.
+    //   - text: string (required) - The text of the message.
+    //   - createdAt: timestamp (required, immutable) - When the message was sent.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'displayName', 'email', 'stylePreference', 'bodyType', 'height', 'weight', 'skinTone', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 100 &&
+             isValidEmail(data.email) &&
+             (!('stylePreference' in data) || (data.stylePreference is string && data.stylePreference.size() < 100)) &&
+             (!('bodyType' in data) || (data.bodyType is string && data.bodyType.size() < 100)) &&
+             (!('height' in data) || (data.height is string && data.height.size() < 10)) &&
+             (!('weight' in data) || (data.weight is string && data.weight.size() < 10)) &&
+             (!('skinTone' in data) || (data.skinTone is string && data.skinTone.size() < 10)) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidWardrobeItem(data) {
+      return hasOnlyAllowedFields(['uid', 'productId', 'name', 'price', 'platform', 'imageUrl', 'tryOnResult', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.productId is string && data.productId.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             (!('price' in data) || (data.price is string && data.price.size() < 50)) &&
+             (!('platform' in data) || (data.platform is string && data.platform.size() < 50)) &&
+             data.imageUrl is string && data.imageUrl.size() > 0 && data.imageUrl.size() < 2000 &&
+             (!('tryOnResult' in data) || (data.tryOnResult is string && data.tryOnResult.size() < 2000000)) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidChatMessage(data) {
+      return hasOnlyAllowedFields(['uid', 'role', 'text', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.role in ['user', 'model'] &&
+             data.text is string && data.text.size() > 0 && data.text.size() < 5000 &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && uidUnchanged();
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /wardrobe/{itemId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && isValidWardrobeItem(request.resource.data) && request.resource.data.uid == request.auth.uid;
+      allow update: if isAuthenticated() && isDocOwner() && isValidWardrobeItem(request.resource.data) && uidNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+
+    match /chats/{chatId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && isValidChatMessage(request.resource.data) && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
