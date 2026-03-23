@@ -15,6 +15,7 @@ import { TRENDS } from './constants';
 
 import { LoadingScreen } from './components/LoadingScreen';
 import { AnimatePresence } from 'motion/react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   const { user, loading: authLoading, signIn, signOut } = useAuth();
@@ -22,10 +23,11 @@ function App() {
   const { profile, loading: profileLoading, saving: profileSaving, saveProfile } = useProfile(user);
 
   return (
-    <Router>
-      <AnimatePresence mode="wait">
-        {authLoading && <LoadingScreen key="loading" />}
-      </AnimatePresence>
+    <ErrorBoundary>
+      <Router>
+        <AnimatePresence mode="wait">
+          {authLoading && <LoadingScreen key="loading" />}
+        </AnimatePresence>
 
       <div className="min-h-screen bg-white text-brand-black selection:bg-brand-gold selection:text-white">
         <Toaster 
@@ -63,6 +65,7 @@ function App() {
         <Footer />
       </div>
     </Router>
+    </ErrorBoundary>
   );
 }
 
